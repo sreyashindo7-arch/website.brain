@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gemini Chat</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+        .container { width: 400px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        textarea { width: 100%; padding: 10px; border-radius: 5px; }
+        .reply-box { padding: 10px; margin-top: 15px; background: #eee; border-radius: 5px; }
+        button { background: black; color: white; padding: 10px; border-radius: 5px; margin-top: 10px; border: none; cursor: pointer; }
+        button:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🤖 Gemini Chat</h2>
+
+    <form action="/chat" method="post">
+        <textarea name="message" rows="3" placeholder="Type your message..." required>{{ user_input or '' }}</textarea>
+        <br>
+        <button type="submit">Send</button>
+    </form>
+
+    {% if reply %}
+    <div class="reply-box">
+        <strong>LLM Response:</strong><br><br>
+        {{ reply }}
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>

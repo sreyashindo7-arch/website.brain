@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Alarm Clock</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background:
+                radial-gradient(circle at top left, #6c63ff, transparent 35%),
+                radial-gradient(circle at bottom right, #00c6ff, transparent 35%),
+                #11152b;
+            color: white;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 45px;
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #d5d7ef;
+            margin-bottom: 25px;
+        }
+
+        .clock {
+            font-size: clamp(48px, 15vw, 76px);
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin: 20px 0;
+            text-shadow: 0 0 25px rgba(255, 255, 255, 0.25);
+        }
+
+        .date {
+            color: #d5d7ef;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.18);
+            border-radius: 20px;
+            padding: 22px;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            color: #e8e9ff;
+            font-weight: bold;
+        }
+
+        input[type="time"],
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            outline: none;
+            margin-bottom: 15px;
+            background: white;
+            color: #222;
+        }
+
+        button {
+            border: none;
+            border-radius: 13px;
+            padding: 13px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s ease;
+            min-height: 48px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .set-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #7c6cff, #5a4ff0);
+            color: white;
+        }
+
+        .test-btn {
+            width: 100%;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .alarm-status {
+            margin-top: 18px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #dfe1ff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Alarm screen */
+
+        .alarm-panel {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 20px;
+            background: rgba(255, 80, 100, 0.18);
+            border: 1px solid rgba(255, 100, 120, 0.35);
+        }
+
+        .alarm-panel h2 {
+            font-size: 30px;
+            margin-bottom: 10px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .task-box {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .task-question {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .task-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .solve-btn {
+            background: #20c997;
+            color: white;
+        }
+
+        .snooze-btn {
+            background: #ffb020;
+            color: #242424;
+        }
+
+        .stop-btn {
+            background: #ff4961;
+            color: white;
+        }
+
+        .stop-btn:disabled {
+            background: #777;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+
+        .snooze-countdown {
+            margin-top: 15px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #ffe28a;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #65f2c1;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 450px) {
+            .app {
+                padding: 22px;
+            }
+
+            h1 {
+                font-size: 27px;
+            }
+
+            .task-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <div class="logo">⏰</div>
+
+        <h1>Smart Alarm</h1>
+
+        <p class="subtitle">
+            Wake up. Complete your task. Start your day.
+        </p>
+
+        <!-- Current time -->
+        <div class="clock" id="currentTime">
+            00:00:00
+        </div>
+
+        <div class="date" id="currentDate">
+            Loading...
+        </div>
+
+        <!-- Alarm setup -->
+        <div class="card">
+
+            <label for="alarmTime">
+                Set your alarm
+            </label>
+
+            <input type="time" id="alarmTime">
+
+            <button class="set-btn" id="setAlarm">
+                ⏰ Set Alarm
+            </button>
+
+            <button class="test-btn" id="testAlarm">
+                🔊 Test Alarm
+            </button>
+
+            <div class="alarm-status" id="alarmStatus">
+                No alarm has been set.
+            </div>
+
+        </div>
+
+
+        <!-- Alarm panel -->
+        <div class="alarm-panel hidden" id="alarmPanel">
+
+            <h2>🔔 WAKE UP!</h2>
+
+            <p>
+                Your alarm is ringing.
+            </p>
+
+            <div class="task-box">
+
+                <div class="task-question" id="taskQuestion">
+                    Complete the task below to stop the alarm.
+                </div>
+
+                <input type="text" id="taskAnswer" placeholder="Enter your answer...">
+
+                <div class="task-actions">
+
+                    <button class="solve-btn" id="solveTask">
+                        ✅ Complete Task
+                    </button>
+
+                    <button class="snooze-btn" id="snoozeAlarm">
+                        😴 Snooze 5 min
+                    </button>
+
+                    <button class="stop-btn" id="stopAlarm" disabled>
+                        🛑 Stop Alarm
+                    </button>
+
+                </div>
+
+                <div class="success hidden" id="taskSuccess">
+                    ✅ Task completed! You can now stop the alarm.
+                </div>
+
+                <div class="snooze-countdown hidden" id="snoozeCountdown">
+                    😴 Snoozing...
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        /* =========================================
+           VARIABLES
+        ========================================= */
+
+        let alarmTime = null;
+        let alarmActive = false;
+        let alarmRinging = false;
+        let taskCompleted = false;
+
+        let snoozeTimer = null;
+        let alarmInterval = null;
+
+        let audioContext = null;
+        let oscillator = null;
+        let gainNode = null;
+
+
+        /* =========================================
+           ELEMENTS
+        ========================================= */
+
+        const currentTimeElement =
+            document.getElementById("currentTime");
+
+        const currentDateElement =
+            document.getElementById("currentDate");
+
+        const alarmTimeInput =
+            document.getElementById("alarmTime");
+
+        const setAlarmButton =
+            document.getElementById("setAlarm");
+
+        const testAlarmButton =
+            document.getElementById("testAlarm");
+
+        const alarmStatus =
+            document.getElementById("alarmStatus");
+
+        const alarmPanel =
+            document.getElementById("alarmPanel");
+
+        const taskQuestion =
+            document.getElementById("taskQuestion");
+
+        const taskAnswer =
+            document.getElementById("taskAnswer");
+
+        const solveTaskButton =
+            document.getElementById("solveTask");
+
+        const stopAlarmButton =
+            document.getElementById("stopAlarm");
+
+        const snoozeButton =
+            document.getElementById("snoozeAlarm");
+
+        const taskSuccess =
+            document.getElementById("taskSuccess");
+
+        const snoozeCountdown =
+            document.getElementById("snoozeCountdown");
+
+
+        /* =========================================
+           CURRENT CLOCK
+        ========================================= */
+
+        function updateClock() {
+
+            const now = new Date();
+
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+
+            hours = String(hours).padStart(2, "0");
+            minutes = String(minutes).padStart(2, "0");
+            seconds = String(seconds).padStart(2, "0");
+
+            currentTimeElement.textContent =
+                `${hours}:${minutes}:${seconds}`;
+
+            currentDateElement.textContent =
+                now.toLocaleDateString(undefined, {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric"
+                });
+
+            checkAlarm(now);
+        }
+
+        setInterval(updateClock, 1000);
+
+        updateClock();
+
+
+        /* =========================================
+           SET ALARM
+        ========================================= */
+
+        setAlarmButton.addEventListener("click", function () {
+
+            const selectedTime = alarmTimeInput.value;
+
+            if (!selectedTime) {
+
+                alarmStatus.textContent =
+                    "⚠️ Please select a time first.";
+
+                return;
+            }
+
+            alarmTime = selectedTime;
+            alarmActive = true;
+
+            alarmStatus.textContent =
+                `⏰ Alarm set for ${formatTime(selectedTime)}`;
+
+            alarmStatus.style.color = "#65f2c1";
+
+        });
+
+
+        /* =========================================
+           FORMAT TIME
+        ========================================= */
+
+        function formatTime(time) {
+
+            const [hours, minutes] = time.split(":");
+
+            const date = new Date();
+
+            date.setHours(
+                Number(hours),
+                Number(minutes),
+                0
+            );
+
+            return date.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit"
+            });
+        }
+
+
+        /* =========================================
+           CHECK ALARM
+        ========================================= */
+
+        function checkAlarm(now) {
+
+            if (!alarmActive || alarmRinging) {
+                return;
+            }
+
+            const hours =
+                String(now.getHours()).padStart(2, "0");
+
+            const minutes =
+                String(now.getMinutes()).padStart(2, "0");
+
+            const current =
+                `${hours}:${minutes}`;
+
+            if (current === alarmTime && now.getSeconds() === 0) {
+
+                startAlarm();
+
+            }
+        }
+
+
+        /* =========================================
+           START ALARM
+        ========================================= */
+
+        function startAlarm() {
+
+            alarmRinging = true;
+            taskCompleted = false;
+
+            alarmPanel.classList.remove("hidden");
+
+            taskAnswer.value = "";
+
+            taskSuccess.classList.add("hidden");
+
+            stopAlarmButton.disabled = true;
+
+            createTask();
+
+            startAlarmSound();
+
+            alarmStatus.textContent =
+                "🔔 Alarm is ringing!";
+
+        }
+
+
+        /* =========================================
+           CREATE SIMPLE TASK
+           User must solve this task before stopping.
+        ========================================= */
+
+        function createTask() {
+
+            const number1 =
+                Math.floor(Math.random() * 9) + 1;
+
+            const number2 =
+                Math.floor(Math.random() * 9) + 1;
+
+            const answer =
+                number1 + number2;
+
+            taskQuestion.dataset.answer = answer;
+
+            taskQuestion.innerHTML =
+                `🧠 Wake-up challenge:<br>
+             What is <strong>${number1} + ${number2}</strong>?`;
+
+        }
+
+
+        /* =========================================
+           CHECK TASK
+        ========================================= */
+
+        solveTaskButton.addEventListener("click", function () {
+
+            const userAnswer =
+                taskAnswer.value.trim();
+
+            const correctAnswer =
+                taskQuestion.dataset.answer;
+
+            if (
+                userAnswer !== "" &&
+                Number(userAnswer) === Number(correctAnswer)
+            ) {
+
+                taskCompleted = true;
+
+                stopAlarmButton.disabled = false;
+
+                taskSuccess.classList.remove("hidden");
+
+                stopAlarmSound();
+
+            } else {
+
+                taskSuccess.classList.add("hidden");
+
+                taskQuestion.innerHTML +=
+                    `<br><span style="color:#ff8d9c;">
+                ❌ Incorrect. Try again!
+                </span>`;
+
+            }
+
+        });
+
+
+        /* =========================================
+           STOP ALARM
+           Only works after completing task.
+        ========================================= */
+
+        stopAlarmButton.addEventListener("click", function () {
+
+            if (!taskCompleted) {
+
+                alert(
+                    "Please complete the task before stopping the alarm."
+                );
+
+                return;
+            }
+
+            stopEverything();
+
+            alarmStatus.textContent =
+                "✅ Alarm stopped. Have a great day!";
+
+        });
+
+
+        /* =========================================
+           SNOOZE
+           5 MINUTES
+        ========================================= */
+
+        snoozeButton.addEventListener("click", function () {
+
+            if (!alarmRinging) {
+                return;
+            }
+
+            stopAlarmSound();
+
+            alarmRinging = false;
+
+            alarmPanel.classList.add("hidden");
+
+            snoozeCountdown.classList.remove("hidden");
+
+            let remaining =
+                5 * 60;
+
+            snoozeCountdown.classList.remove("hidden");
+
+            alarmStatus.textContent =
+                "😴 Alarm snoozed for 5 minutes.";
+
+            if (snoozeTimer) {
+                clearInterval(snoozeTimer);
+            }
+
+            snoozeTimer = setInterval(function () {
+
+                const minutes =
+                    Math.floor(remaining / 60);
+
+                const seconds =
+                    remaining % 60;
+
+                snoozeCountdown.textContent =
+                    `😴 Snooze: ${minutes}:${String(seconds).padStart(2, "0")}`;
+
+                remaining--;
+
+                if (remaining < 0) {
+
+                    clearInterval(snoozeTimer);
+
+                    snoozeCountdown.classList.add("hidden");
+
+                    startAlarm();
+
+                }
+
+            }, 1000);
+
+        });
+
+
+        /* =========================================
+           ALARM SOUND
+        ========================================= */
+
+        function startAlarmSound() {
+
+            stopAlarmSound();
+
+            try {
+
+                audioContext =
+                    new (
+                        window.AudioContext ||
+                        window.webkitAudioContext
+                    )();
+
+                oscillator =
+                    audioContext.createOscillator();
+
+                gainNode =
+                    audioContext.createGain();
+
+                oscillator.type = "square";
+
+                oscillator.frequency.value = 800;
+
+                gainNode.gain.value = 0.15;
+
+                oscillator.connect(gainNode);
+
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start();
+
+                alarmInterval = setInterval(function () {
+
+                    if (!oscillator || !audioContext) {
+                        return;
+                    }
+
+                    oscillator.frequency.value =
+                        oscillator.frequency.value === 800
+                            ? 1100
+                            : 800;
+
+                }, 500);
+
+            } catch (error) {
+
+                console.log(
+                    "Audio could not be started:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        /* =========================================
+           STOP SOUND
+        ========================================= */
+
+        function stopAlarmSound() {
+
+            if (alarmInterval) {
+
+                clearInterval(alarmInterval);
+
+                alarmInterval = null;
+
+            }
+
+            if (oscillator) {
+
+                try {
+                    oscillator.stop();
+                } catch (error) { }
+
+                oscillator.disconnect();
+                oscillator = null;
+            }
+
+            if (gainNode) {
+
+                gainNode.disconnect();
+                gainNode = null;
+
+            }
+
+            if (audioContext) {
+
+                audioContext.close();
+
+                audioContext = null;
+
+            }
+
+        }
+
+
+        /* =========================================
+           STOP EVERYTHING
+        ========================================= */
+
+        function stopEverything() {
+
+            stopAlarmSound();
+
+            alarmRinging = false;
+            alarmActive = false;
+            taskCompleted = false;
+
+            alarmPanel.classList.add("hidden");
+
+            alarmTimeInput.value = "";
+
+            if (snoozeTimer) {
+
+                clearInterval(snoozeTimer);
+
+                snoozeTimer = null;
+
+            }
+
+            snoozeCountdown.classList.add("hidden");
+
+        }
+
+
+        /* =========================================
+           TEST ALARM
+        ========================================= */
+
+        testAlarmButton.addEventListener("click", function () {
+
+            startAlarm();
+
+        });
+
+
+        /* =========================================
+           ENTER KEY
+        ========================================= */
+
+        taskAnswer.addEventListener("keydown", function (event) {
+
+            if (event.key === "Enter") {
+
+                solveTaskButton.click();
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
